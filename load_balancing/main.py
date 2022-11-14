@@ -7,6 +7,7 @@ from slsim import train_slsim
 import argparse
 from generate_cfs import generate_cfs
 import matplotlib.pyplot as plt
+import torch
 
 NO_POLICIES = 16  # 50  # Inner loop counter (second hyper-parameter)
 POLICIES = [
@@ -31,6 +32,7 @@ best_kappa = {
 }
 
 DATAPATH = "non_iid_0_big_extended2_traj.pkl"
+torch.manual_seed(0)
 
 
 def cdf(x, plot=True, *args, **kwargs):
