@@ -22,7 +22,7 @@ Install PyTorch according to the website [instructions](https://pytorch.org).
 First, create a directory as a workspace for datasets, models, simulations and plots. We'll call this directory CAUSALSIM_DIR.
 Next, run the following command:
 ```
-python3 create_dataset.py --dir CAUSALSIM_DIR
+python3 data_preparation/create_dataset.py --dir CAUSALSIM_DIR
 ```
 This script will download stream logs from [the puffer website](https://puffer.stanford.edu). It will then filter them 
 according to the [puffer-statistics](https://github.com/StanfordSNR/puffer-statistics) definition of `slow streams`. 
