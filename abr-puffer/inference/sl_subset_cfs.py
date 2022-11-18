@@ -14,7 +14,6 @@ parser.add_argument("--left_out_policy", type=str, help="left out policy")
 parser.add_argument("--month", type=int, default=None)
 parser.add_argument("--year", type=int, default=None)
 parser.add_argument("--model_number", type=int, help="saved model epoch number", default=10000)
-parser.add_argument("--seed", type=int, default=10)
 args = parser.parse_args()
 
 
@@ -244,7 +243,7 @@ def counterfactual(chat_list, abr_algo, predictor, buf_mean, buf_std, next_buf_m
 
 left_out_text = f'_{args.left_out_policy}'
 PERIOD_TEXT = f'2020-07-27to2021-06-01{left_out_text}'
-cf_path = f'{args.dir}{PERIOD_TEXT}_sl_cfs/seed_{args.seed}/cfs/model_{args.model_number}'
+cf_path = f'{args.dir}{PERIOD_TEXT}_sl_cfs/cfs/model_{args.model_number}'
 os.makedirs(cf_path, exist_ok=True)
 
 data_path = f'{args.dir}subset_data/{args.left_out_policy}'
@@ -280,7 +279,7 @@ all_days = [day for day in all_days if day not in [datetime.date(2019, 5, 12), d
 if args.month is not None and args.year is not None:
     all_days = [date for date in all_days if date.month == args.month and date.year == args.year]
 
-model_path = f'{args.dir}{PERIOD_TEXT}_SL_trained_models/seed_{args.seed}'
+model_path = f'{args.dir}{PERIOD_TEXT}_SL_trained_models'
 predictor = torch.load(f"{model_path}/{args.model_number}_predictor.pth", map_location=torch.device('cpu')).cpu()
 cooked_path = f'{args.dir}cooked'
 

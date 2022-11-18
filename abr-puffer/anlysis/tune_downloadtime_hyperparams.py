@@ -5,7 +5,6 @@ import os
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--dir", help="source directory")
-parser.add_argument("--seed", type=int, default=10)
 args = parser.parse_args()
 policy_names = ['bola_basic_v2', 'bola_basic_v1', 'puffer_ttp_cl', 'puffer_ttp_20190202', 'linear_bba']
 buffer_based_names = ['bola_basic_v2', 'bola_basic_v1', 'linear_bba']
@@ -18,14 +17,14 @@ for left_out_policy in buffer_based_names:
     with open(f'{args.dir}subset_orig_rebuff_dicts/{left_out_policy}/orig_rebuffs.pkl', 'rb') as f:
         orig_dict = pickle.load(f)
     for C in C_list:
-        with open(f'{args.dir}subset_stall_dicts/seed_{args.seed}/{left_out_policy}/stalls_{C}.pkl', 'rb') as f:
+        with open(f'{args.dir}subset_stall_dicts/{left_out_policy}/stalls_{C}.pkl', 'rb') as f:
             sim_dict = pickle.load(f)
         for policy in buffer_based_names:
             sim_data[C][policy].append(100 * abs(np.sum(sim_dict[policy]['rebuffs']) / np.sum(sim_dict[policy]['lens']) - np.sum(orig_dict[policy]['rebuffs']) / np.sum(orig_dict[policy]['lens'])))
     downloadtime_hyperparams[left_out_policy] = [C_list[np.argmin(
         [np.mean([sim_data[C][policy] for policy in buffer_based_names if policy != left_out_policy]) for C in C_list])]]
 
-hyperparam_path = f'{args.dir}tuned_hyperparams/seed_{args.seed}'
+hyperparam_path = f'{args.dir}tuned_hyperparams'
 os.makedirs(hyperparam_path, exist_ok=True)
 with open(f'{hyperparam_path}/downloadtime.pkl', 'wb') as f:
     pickle.dump(downloadtime_hyperparams, f)

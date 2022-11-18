@@ -9,7 +9,6 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--dir", help="source directory")
 parser.add_argument("--left_out_policy", type=str, help="left out policy")
 parser.add_argument("--model_number", type=int, help="saved model epoch number", default=10000)
-parser.add_argument("--seed", type=int, default=10)
 args = parser.parse_args()
 left_out_text = f'_{args.left_out_policy}'
 PERIOD_TEXT = f'2020-07-27to2021-06-01{left_out_text}'
@@ -38,7 +37,7 @@ cooked_path = f'{args.dir}cooked'
 for today in tqdm(all_days):
     date_string = "%d-%02d-%02d" % (today.year, today.month, today.day)
     ids = np.load(f'{cooked_path}/{date_string}_ids_translated.npy', allow_pickle=True)
-    cf_path = f'{args.dir}{PERIOD_TEXT}_sl_cfs/seed_{args.seed}/cfs/model_{args.model_number}'
+    cf_path = f'{args.dir}{PERIOD_TEXT}_sl_cfs/cfs/model_{args.model_number}'
     bba_rebuffs = np.load(f'{cf_path}/{date_string}_linear_bba_rebuffs.npy', allow_pickle=True)
     bola1_rebuffs = np.load(f'{cf_path}/{date_string}_bola1_rebuffs.npy', allow_pickle=True)
     bola2_rebuffs = np.load(f'{cf_path}/{date_string}_bola2_rebuffs.npy', allow_pickle=True)
@@ -50,7 +49,7 @@ for today in tqdm(all_days):
             sl_data['bola_basic_v1']['lens'].append(len(bola1_rebuffs[idx]) * 2.002 + sl_data['bola_basic_v1']['rebuffs'][-1])
             sl_data['bola_basic_v2']['lens'].append(len(bola2_rebuffs[idx]) * 2.002 + sl_data['bola_basic_v2']['rebuffs'][-1])
             sl_data['linear_bba']['lens'].append(len(bba_rebuffs[idx]) * 2.002 + sl_data['linear_bba']['rebuffs'][-1])
-stall_path = f'{args.dir}subset_sl_stall_dicts/seed_{args.seed}/{args.left_out_policy}'
+stall_path = f'{args.dir}subset_sl_stall_dicts/{args.left_out_policy}'
 os.makedirs(stall_path, exist_ok=True)
 
 with open(f'{stall_path}/stalls.pkl', 'wb') as f:

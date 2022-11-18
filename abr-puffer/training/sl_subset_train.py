@@ -11,15 +11,14 @@ parser.add_argument("--dir", help="root directory")
 parser.add_argument("--left_out_policy", type=str, help="left out policy")
 parser.add_argument("--device", type=str, help="Compute device", default='cuda:0')
 parser.add_argument("--batch_size", type=int, default=17)
-parser.add_argument("--seed", type=int, default=10)
 args = parser.parse_args()
 BATCH_SIZE = 2 ** args.batch_size
 device = torch.device(args.device)
 left_out_text = f'_{args.left_out_policy}'
 PERIOD_TEXT = f'2020-07-27to2021-06-01{left_out_text}'
 
-torch.manual_seed(args.seed)
-np.random.seed(args.seed)
+torch.manual_seed(10)
+np.random.seed(10)
 
 
 def mlp(sizes, activation, output_activation=nn.Identity):
@@ -42,7 +41,7 @@ class MLP(nn.Module):
         return prediction
 
 
-new_path = f'{args.dir}{PERIOD_TEXT}_SL_trained_models/seed_{args.seed}'
+new_path = f'{args.dir}{PERIOD_TEXT}_SL_trained_models'
 os.makedirs(new_path, exist_ok=True)
 data_dir = f'{args.dir}subset_data/{args.left_out_policy}'
 dts = np.load(f'{data_dir}/white_dts.npy')
@@ -65,7 +64,7 @@ del chats, actions, policy_numbers
 predictor = MLP(input_dim=3, output_dim=2, hidden_sizes=[128, 128], activation=nn.ReLU).to(device=device)
 huber_loss = nn.HuberLoss(delta=0.2)
 predictor_optimizer = torch.optim.Adam(predictor.parameters())
-writer_train = SummaryWriter(log_dir=f"{args.dir}logs/seed_{args.seed}/subset_{args.left_out_policy}_SL")
+writer_train = SummaryWriter(log_dir=f"{args.dir}logs/subset_{args.left_out_policy}_SL")
 for epoch in tqdm(range(10000)):
     # Predictor training:
     idx = np.random.choice(data_size, size=BATCH_SIZE)

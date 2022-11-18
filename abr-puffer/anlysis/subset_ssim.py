@@ -19,7 +19,6 @@ parser.add_argument("--dir", help="source directory")
 parser.add_argument("--C", type=float, help="discriminator loss coefficient")
 parser.add_argument("--left_out_policy", type=str, help="left out policy")
 parser.add_argument("--model_number", type=int, help="saved model epoch number", default=5000)
-parser.add_argument("--seed", type=int, default=10)
 args = parser.parse_args()
 NUMBER_OF_BINS = 10000
 left_out_text = f'_{args.left_out_policy}'
@@ -52,7 +51,7 @@ sim_ssims = {target_policy: [] for target_policy in buffer_based_names}
 for today in tqdm(all_days):
     date_string = "%d-%02d-%02d" % (today.year, today.month, today.day)
     ids = np.load(f'{cooked_path}/{date_string}_ids_translated.npy', allow_pickle=True)
-    sim_path = f'{args.dir}{PERIOD_TEXT}_buff_cfs/seed_{args.seed}/inner_loop_{DISCRIMINATOR_EPOCH}/C_{C}/cfs/' \
+    sim_path = f'{args.dir}{PERIOD_TEXT}_buff_cfs/inner_loop_{DISCRIMINATOR_EPOCH}/C_{C}/cfs/' \
                f'model_{args.model_number}'
     bba_ssims = np.load(f'{sim_path}/{date_string}_linear_bba_ssims.npy', allow_pickle=True)
     bola1_ssims = np.load(f'{sim_path}/{date_string}_bola1_ssims.npy', allow_pickle=True)
@@ -67,7 +66,7 @@ for target in buffer_based_names:
     sim_ssims[target] = np.mean(sim_ssims[target])
     sim_ssims[target] = ssim_db(sim_ssims[target])
 
-ssim_path = f'{args.dir}subset_ssim_dicts/seed_{args.seed}/{args.left_out_policy}'
+ssim_path = f'{args.dir}subset_ssim_dicts/{args.left_out_policy}'
 os.makedirs(ssim_path, exist_ok=True)
 with open(f'{ssim_path}/ssims_{C}.pkl', 'wb') as f:
     pickle.dump(sim_ssims, f)

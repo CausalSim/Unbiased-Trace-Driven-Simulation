@@ -15,7 +15,6 @@ parser.add_argument("--left_out_policy", type=str, help="left out policy")
 parser.add_argument("--month", type=int, default=None)
 parser.add_argument("--year", type=int, default=None)
 parser.add_argument("--model_number", type=int, help="saved model epoch number", default=5000)
-parser.add_argument("--seed", type=int, default=10)
 args = parser.parse_args()
 
 
@@ -238,10 +237,9 @@ DISCRIMINATOR_EPOCH = 10
 left_out_text = f'_{args.left_out_policy}'
 PERIOD_TEXT = f'2020-07-27to2021-06-01{left_out_text}'
 C = args.C
-with open(f'{args.dir}tuned_hyperparams/seed_{args.seed}/buffer.pkl', 'rb') as f:
+with open(f'{args.dir}tuned_hyperparams/buffer.pkl', 'rb') as f:
     b_C = pickle.load(f)[args.left_out_policy][0]
-cf_path = f'{args.dir}{PERIOD_TEXT}_dt_cfs/seed_{args.seed}/inner_loop_{DISCRIMINATOR_EPOCH}/C_{C}/cfs/' \
-          f'model_{args.model_number}'
+cf_path = f'{args.dir}{PERIOD_TEXT}_dt_cfs/inner_loop_{DISCRIMINATOR_EPOCH}/C_{C}/cfs/model_{args.model_number}'
 os.makedirs(cf_path, exist_ok=True)
 
 data_path = f'{args.dir}subset_data/{args.left_out_policy}'
@@ -272,12 +270,12 @@ all_days = [day for day in all_days if day not in [datetime.date(2019, 5, 12), d
 if args.month is not None and args.year is not None:
     all_days = [date for date in all_days if date.month == args.month and date.year == args.year]
 
-model_path = f'{args.dir}{PERIOD_TEXT}_trained_models/seed_{args.seed}/inner_loop_{DISCRIMINATOR_EPOCH}/C_{C}'
+model_path = f'{args.dir}{PERIOD_TEXT}_trained_models/inner_loop_{DISCRIMINATOR_EPOCH}/C_{C}'
 predictor = torch.load(f"{model_path}/{args.model_number}_predictor.pth", map_location=torch.device('cpu')).cpu()
 cooked_path = f'{args.dir}cooked'
-latent_path = f'{args.dir}{PERIOD_TEXT}_features/seed_{args.seed}/inner_loop_{DISCRIMINATOR_EPOCH}/C_{C}/' \
+latent_path = f'{args.dir}{PERIOD_TEXT}_features/inner_loop_{DISCRIMINATOR_EPOCH}/C_{C}/' \
               f'model_{args.model_number}'
-buffer_path = f'{args.dir}{PERIOD_TEXT}_buff_cfs/seed_{args.seed}/inner_loop_{DISCRIMINATOR_EPOCH}/C_{b_C}/cfs/' \
+buffer_path = f'{args.dir}{PERIOD_TEXT}_buff_cfs/inner_loop_{DISCRIMINATOR_EPOCH}/C_{b_C}/cfs/' \
               f'model_{args.model_number}'
 
 for today in tqdm(all_days):

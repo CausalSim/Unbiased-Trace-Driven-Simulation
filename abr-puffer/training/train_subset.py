@@ -13,11 +13,10 @@ parser.add_argument("--C", type=float, help="discriminator loss coefficient")
 parser.add_argument("--left_out_policy", type=str, help="left out policy")
 parser.add_argument("--device", type=str, help="Compute device", default='cuda:0')
 parser.add_argument("--batch_size", type=int, default=17)
-parser.add_argument("--seed", type=int, default=10)
 args = parser.parse_args()
 
-torch.manual_seed(args.seed)
-np.random.seed(args.seed)
+torch.manual_seed(10)
+np.random.seed(10)
 
 BATCH_SIZE = 2 ** args.batch_size
 DISCRIMINATOR_EPOCH = 10
@@ -47,7 +46,7 @@ class MLP(nn.Module):
         return prediction
 
 
-new_path = f'{args.dir}{PERIOD_TEXT}_trained_models/seed_{args.seed}/inner_loop_{DISCRIMINATOR_EPOCH}/C_{C}'
+new_path = f'{args.dir}{PERIOD_TEXT}_trained_models/inner_loop_{DISCRIMINATOR_EPOCH}/C_{C}'
 os.makedirs(new_path, exist_ok=True)
 data_dir = f'{args.dir}subset_data/{args.left_out_policy}'
 dts = np.load(f'{data_dir}/white_dts.npy')
@@ -75,7 +74,7 @@ ce_loss = nn.CrossEntropyLoss()
 feature_extractor_optimizer = torch.optim.Adam(feature_extractor.parameters())
 predictor_optimizer = torch.optim.Adam(predictor.parameters())
 discriminator_optimizer = torch.optim.Adam(discriminator.parameters())
-writer_train = SummaryWriter(log_dir=f"{args.dir}logs/seed_{args.seed}/subset_{args.left_out_policy}/"
+writer_train = SummaryWriter(log_dir=f"{args.dir}logs/subset_{args.left_out_policy}/"
                                      f"inner_loop_{DISCRIMINATOR_EPOCH}/C_{C}")
 for epoch in tqdm(range(5000)):
     t1 = time.time()

@@ -12,7 +12,6 @@ parser.add_argument("--C", type=float, help="discriminator loss coefficient")
 parser.add_argument("--left_out_policy", type=str, help="left out policy")
 parser.add_argument("--causalsim_model_number", type=int, help="CausalSim's saved model epoch number", default=5000)
 parser.add_argument("--slsim_model_number", type=int, help="SLSim's saved model epoch number", default=10000)
-parser.add_argument("--seed", type=int, default=10)
 args = parser.parse_args()
 C = args.C
 NUMBER_OF_BINS = 10000
@@ -24,7 +23,7 @@ sim_key_text = '_buffs'
 sl_key_text = '_buffs'
 expert_key_text = '_buffs'
 
-EMD_dir = f'{args.dir}subset_EMDs/seed_{args.seed}/{args.left_out_policy}'
+EMD_dir = f'{args.dir}subset_EMDs/{args.left_out_policy}'
 os.makedirs(EMD_dir, exist_ok=True)
 
 policy_names = ['bola_basic_v2', 'bola_basic_v1', 'puffer_ttp_cl', 'puffer_ttp_20190202', 'linear_bba']
@@ -62,7 +61,7 @@ cooked_path = f'{args.dir}cooked'
 for today in tqdm(all_days):
     date_string = "%d-%02d-%02d" % (today.year, today.month, today.day)
     ids = np.load(f'{cooked_path}/{date_string}_ids_translated.npy', allow_pickle=True)
-    sim_path = f'{args.dir}{PERIOD_TEXT}_{cf_type}_cfs/seed_{args.seed}/inner_loop_{DISCRIMINATOR_EPOCH}/C_{C}/cfs/' \
+    sim_path = f'{args.dir}{PERIOD_TEXT}_{cf_type}_cfs/inner_loop_{DISCRIMINATOR_EPOCH}/C_{C}/cfs/' \
                f'model_{args.causalsim_model_number}'
     bba_preds = np.load(f'{sim_path}/{date_string}_linear_bba{sim_key_text}.npy', allow_pickle=True)
     bola1_preds = np.load(f'{sim_path}/{date_string}_bola1{sim_key_text}.npy', allow_pickle=True)
@@ -72,7 +71,7 @@ for today in tqdm(all_days):
     expert_bba_preds = np.load(f'{expert_path}/{date_string}_linear_bba{expert_key_text}.npy', allow_pickle=True)
     expert_bola1_preds = np.load(f'{expert_path}/{date_string}_bola1{expert_key_text}.npy', allow_pickle=True)
     expert_bola2_preds = np.load(f'{expert_path}/{date_string}_bola2{expert_key_text}.npy', allow_pickle=True)
-    sl_path = f'{args.dir}{PERIOD_TEXT}_sl_cfs/seed_{args.seed}/cfs/model_{args.slsim_model_number}'
+    sl_path = f'{args.dir}{PERIOD_TEXT}_sl_cfs/cfs/model_{args.slsim_model_number}'
     sl_bba_preds = np.load(f'{sl_path}/{date_string}_linear_bba{sl_key_text}.npy', allow_pickle=True)
     sl_bola1_preds = np.load(f'{sl_path}/{date_string}_bola1{sl_key_text}.npy', allow_pickle=True)
     sl_bola2_preds = np.load(f'{sl_path}/{date_string}_bola2{sl_key_text}.npy', allow_pickle=True)
