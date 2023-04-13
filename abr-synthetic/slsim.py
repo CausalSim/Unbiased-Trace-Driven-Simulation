@@ -7,12 +7,15 @@ from tqdm import tqdm
 from sklearn.model_selection import train_test_split
 from nn_util import MLP
 
+loss_dics = {
+    "mse_loss": nn.MSELoss(),
+    "l1_loss": nn.L1Loss(),
+    "huber_loss": nn.HuberLoss(),
+}
+
 
 def train_slsim(
-    datapath,
-    models_path="models",
-    BATCH_SIZE=2**13,
-    N=int(5 * 1e6),
+    datapath, models_path="models", BATCH_SIZE=2**13, N=int(5 * 1e6), loss="mse_loss"
 ):
     path_models = f"{models_path}/slsim/"
 
@@ -27,7 +30,7 @@ def train_slsim(
         pass
 
     if torch.cuda.is_available():
-        device = torch.device(f"cuda:1")
+        device = torch.device(f"cuda:3")
     else:
         device = torch.device(f"cpu")
 
@@ -60,7 +63,7 @@ def train_slsim(
         input_dim=4, output_dim=2, hidden_sizes=[128, 128], activation=nn.ReLU
     ).to(device)
 
-    mse_loss = nn.MSELoss()
+    loss = loss_dics[loss]
     buffer_predictor_optimizer = torch.optim.Adam(
         buffer_predictor.parameters(), lr=1e-4
     )
@@ -73,7 +76,7 @@ def train_slsim(
         batch_output_tensors = train_output_tensors[idx]
         buffer_predictor_optimizer.zero_grad()
         pred_tensors = buffer_predictor(batch_input_tensors[:, :])
-        pred_loss = mse_loss(pred_tensors, batch_output_tensors[:, :2])
+        pred_loss = loss(pred_tensors, batch_output_tensors[:, :2])
         writer_train.add_scalar(
             "predictor_loss/prediction", pred_loss.cpu().detach().numpy(), epoch
         )
@@ -86,7 +89,7 @@ def train_slsim(
             )
             ## val loss
             pred_tensors = buffer_predictor(val_input_tensors[:, :])
-            pred_loss = mse_loss(pred_tensors, val_output_tensors[:, :2])
+            pred_loss = loss(pred_tensors, val_output_tensors[:, :2])
             total_loss = pred_loss.cpu().detach().numpy()
             print(
                 f"Val loss: epoch {epoch}, prediction loss {pred_loss.cpu().detach().numpy()}"

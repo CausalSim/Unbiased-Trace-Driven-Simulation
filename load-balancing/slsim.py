@@ -7,12 +7,15 @@ from tqdm import tqdm
 from sklearn.model_selection import train_test_split
 from nn_util import MLP
 
+loss_dics = {
+    "mse_loss": nn.MSELoss(),
+    "l1_loss": nn.L1Loss(),
+    "huber_loss": nn.HuberLoss(),
+}
+
 
 def train_slsim(
-    datapath,
-    models_path="models",
-    BATCH_SIZE=2**13,
-    N=int(5 * 1e6),
+    datapath, models_path="models", BATCH_SIZE=2**13, N=int(5 * 1e6), loss="mse_loss"
 ):
     path_models = f"{models_path}/slsim/"
 
@@ -27,7 +30,7 @@ def train_slsim(
         pass
 
     if torch.cuda.is_available():
-        device = torch.device(f"cuda:0")
+        device = torch.device(f"cuda:2")
     else:
         device = torch.device(f"cpu")
 
@@ -61,7 +64,7 @@ def train_slsim(
         input_dim=9, output_dim=1, hidden_sizes=[128, 128], activation=nn.ReLU
     ).to(device)
 
-    mse_loss = nn.MSELoss()
+    loss = loss_dics[loss]
     buffer_predictor_optimizer = torch.optim.Adam(
         buffer_predictor.parameters(), lr=5e-5
     )
@@ -78,8 +81,7 @@ def train_slsim(
 
         predictor_input = batch_input_tensors[:, :]
         pred_tensors = buffer_predictor(predictor_input)
-
-        pred_loss = mse_loss(pred_tensors, batch_output_tensors[:, :1])
+        pred_loss = loss(pred_tensors, batch_output_tensors[:, :1])
         total_loss = pred_loss
         writer_train.add_scalar(
             "predictor_loss/prediction", pred_loss.cpu().detach().numpy(), epoch
@@ -91,8 +93,8 @@ def train_slsim(
             print(
                 f"Train loss: epoch {epoch}, prediction loss {pred_loss.cpu().detach().numpy()}"
             )
-            pred_tensors = val_input_tensors[:, :]
-            total_loss = mse_loss(pred_tensors, val_output_tensors[:, :1])
+            pred_tensors = buffer_predictor(val_input_tensors[:, :])
+            total_loss = loss(pred_tensors, val_output_tensors[:, :1])
             print(
                 f"Val loss: epoch {epoch}, prediction loss {pred_loss.cpu().detach().numpy()}"
             )

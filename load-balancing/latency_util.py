@@ -2,8 +2,15 @@ import numpy as np
 from tqdm import tqdm
 import torch
 
-from create_dataset import PowerofKPolicy, OptimalPolicy, RandomPolicy, ShortestQueuePolicy, JobScheduler, \
-    ProcessTimeManager, TrackerPolicy
+from create_dataset import (
+    PowerofKPolicy,
+    OptimalPolicy,
+    RandomPolicy,
+    ShortestQueuePolicy,
+    JobScheduler,
+    ProcessTimeManager,
+    TrackerPolicy,
+)
 
 
 def collect_traces_sim_traj_fact(
@@ -135,15 +142,6 @@ def collect_traces_direct_traj(
 
     no_traj, length = job_sizes.shape
 
-    # Load info arrays
-    time_jobs = np.cumsum(inter_arrs, axis=-1)
-    actions = np.empty((1, no_traj, length), dtype=int)
-    proc_times = np.empty((1, no_traj, length), dtype=float)
-    latencies = np.empty((1, no_traj, length), dtype=float)
-    feature = np.empty((no_traj, length), dtype=float)
-    max_action = 7
-    env = JobScheduler(ns)
-    pt_mgr = ProcessTimeManager(ns, seed, p_change)
     # Load policies
     pols = [
         RandomPolicy(seed, ns),
@@ -155,7 +153,20 @@ def collect_traces_direct_traj(
         OptimalPolicy(seed, ns),
         TrackerPolicy(seed, ns, 0.995),
     ]
-    pols = pols[test_pol_idx : test_pol_idx + 1]
+    if test_pol_idx is not None:
+        pols = pols[test_pol_idx : test_pol_idx + 1]
+        p_out = 1
+    else:
+        p_out = len(pols)
+    # Load info arrays
+    time_jobs = np.cumsum(inter_arrs, axis=-1)
+    actions = np.empty((p_out, no_traj, length), dtype=int)
+    proc_times = np.empty((p_out, no_traj, length), dtype=float)
+    latencies = np.empty((p_out, no_traj, length), dtype=float)
+    feature = np.empty((no_traj, length), dtype=float)
+    max_action = 7
+    env = JobScheduler(ns)
+    pt_mgr = ProcessTimeManager(ns, seed, p_change)
     for i_pol, policy in enumerate(pols):
         # Reset environment
         # Load rate manager
@@ -176,8 +187,11 @@ def collect_traces_direct_traj(
                 input_numpy = np.zeros(max_action + 2)
                 input_numpy[action + 1] = 1
                 input_numpy[0] = pt_o_white
+                input_numpy = np.array([input_numpy])
                 input_tensor = torch.as_tensor(
-                    [input_numpy], dtype=torch.float32, device=torch.device("cpu")
+                    input_numpy,
+                    dtype=torch.float32,
+                    device=torch.device("cpu"),
                 )
                 with torch.no_grad():
                     cf_processing_time_white = buffer_predictor(input_tensor)
