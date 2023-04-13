@@ -52,7 +52,6 @@ def get_mape(truth, estimate, policy_assignment):
 
 
 def load_and_create_datasets(dict_exp, policy_out, dir_out):
-
     policy_out_idx = POLICIES.index(policy_out)
 
     actions = dict_exp["actions"]
@@ -131,6 +130,13 @@ def parse_args():
         default=None,
         help="choose the kappa parameters",
     )
+    parser.add_argument(
+        "--slsim_loss",
+        type=str,
+        default="mse_loss",
+        help="choose the loss from mse_loss, l1_loss, huber_loss",
+    )
+
     return parser.parse_args()
 
 
@@ -170,23 +176,25 @@ def main():
 
     print("TRAIN SLSIM .. ")
     # train direct
-    train_slsim(generated_datapath, models_path=f"{args.dir}/models/{args.policy_out}")
+    train_slsim(
+        generated_datapath,
+        models_path=f"{args.dir}/models/{args.policy_out}/{args.slsim_loss}",
+        loss=args.slsim_loss,
+    )
     print("GENERATE SLSIM COUNTERFACTUALS")
 
     alg = "slsim"
     cf_slsim, features_slsim = generate_cfs(
         dict_exp,
         generated_datapath,
-        models_path=f"{args.dir}/models/{args.policy_out}/{alg}/",
+        models_path=f"{args.dir}/models/{args.policy_out}/{args.slsim_loss}/{alg}/",
         test_policy_idx=policy_index,
         alg=alg,
         N_test=5000,
     )
 
     print("Plotting results")
-    policy_assignment = np.load(
-        f"{generated_datapath}/policy_assignment.npy"
-    )
+    policy_assignment = np.load(f"{generated_datapath}/policy_assignment.npy")
     truth_processing_time = dict_exp["proc_times"]
     MAPE_causal = get_mape(
         truth_processing_time[policy_index, :, :],

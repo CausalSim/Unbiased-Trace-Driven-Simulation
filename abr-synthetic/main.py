@@ -93,7 +93,6 @@ def load_and_create_datasets(data_path, policy_out, dir_out):
     policy_assignment = np.zeros(total_no_traj)
     # loop over policies and load the data
     for i, policy in enumerate(policies):
-
         data = np.load(f"{data_path}/{policy}.npy")
         # select a fraction of the trajectories (not randomly, it's sliced in order)
         if i + 1 == len(policies):
@@ -234,6 +233,13 @@ def parse_args():
         help="choose the kappa parameters",
     )
     parser.add_argument(
+        "--slsim_loss",
+        type=str,
+        default="mse_loss",
+        help="choose the loss from mse_loss, l1_loss, huber_loss",
+    )
+
+    parser.add_argument(
         "--seed", type=int, default=42, help="random seed (default: 42)"
     )
     parser.add_argument(
@@ -301,14 +307,18 @@ def main():
 
     print("TRAIN SLSIM .. ")
     # train direct
-    train_slsim(generated_datapath, models_path=f"{args.dir}/models/{args.policy_out}")
-
+    # train direct
+    train_slsim(
+        generated_datapath,
+        models_path=f"{args.dir}/models/{args.policy_out}/{args.slsim_loss}",
+        loss=args.slsim_loss,
+    )
     print("GENERATE SLSIM COUNTERFACTUALS")
     alg = "slsim"
     cf_slsim = generate_cfs(
         args.dir,
         generated_datapath,
-        models_path=f"{args.dir}/models/{args.policy_out}/{alg}/",
+        models_path=f"{args.dir}/models/{args.policy_out}/{args.slsim_loss}/{alg}/",
         config=args,
         test_policy_idx=policy_index,
         alg=alg,
