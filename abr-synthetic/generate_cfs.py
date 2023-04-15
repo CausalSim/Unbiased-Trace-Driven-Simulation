@@ -14,7 +14,6 @@ def generate_cfs(
     alg="causalsim",
     r=None,
 ):
-
     buffers = np.load(f"{training_datapath}/raw_train_buffers_synthetic.npy")
     next_buffers = np.load(f"{training_datapath}/raw_train_next_buffers_synthetic.npy")
     c_hats = np.load(f"{training_datapath}/raw_train_c_hats_synthetic.npy")
@@ -41,7 +40,10 @@ def generate_cfs(
     download_time_std = np.std(download_time)
 
     policies, _, _ = get_all_policies(config)
-    pols = [policies[test_policy_idx]]
+    if test_policy_idx is None:
+        pols = policies
+    else:
+        pols = [policies[test_policy_idx]]
 
     train_trajectories = np.load(
         f"{training_datapath}/train_trajectories.npy", allow_pickle=True
@@ -55,7 +57,7 @@ def generate_cfs(
     )
     cfs = np.zeros(
         [
-            train_trajectories.shape[0],
+            len(pols),
             train_trajectories.shape[1],
             train_trajectories.shape[2],
             3,
@@ -109,7 +111,7 @@ def generate_cfs(
         )
 
         for idx, traj in tqdm(enumerate(trajs)):
-            cfs[0, idx, :] = collect_traces_slsim(
+            cfs[:, idx, :] = collect_traces_slsim(
                 pols,
                 traj[1:, 4],
                 traj[:, 13 : 13 + 30],

@@ -51,7 +51,7 @@ To run the experiment and generate the counterfactuals of policy `POLICY_NAME` (
 
 ```
 
-python3 main.py --policy_out POLICY_NAME --dir CAUSALSIM_DIR
+python3 main.py --policy_out POLICY_NAME --dir CAUSALSIM_DIR --slsim_loss  mse_loss
 
 ```
 
@@ -66,6 +66,7 @@ Where `POLICY_NAME` can be any one of {
     "Tracker"
 }.
 
+and slsim loss should be one of the three losses `mse_loss`, `l1_loss`, or `huber_loss`.
 
 This will produce three plots (saved in `figures/`):
 

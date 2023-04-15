@@ -1,7 +1,5 @@
 import numpy as np
-import pickle
 import os
-from causalsim import train_causal_sim
 from slsim import train_slsim
 import argparse
 
@@ -33,18 +31,6 @@ policy_paths_names = [
     "pess_rate_traj",
 ]
 
-best_kappa = {
-    "BBA": 1.0,
-    "BBAMIX-x1-50": 1.0,
-    "BBAMIX-x2-50": 1.0,
-    "MPC": 0.01,
-    "Random": 1.0,
-    "BOLA": 1.0,
-    "Rate Based": 1.0,
-    "Optimistic Rate Based": 1.0,
-    "Pessimistic Rate Based": 10.0,
-}
-
 torch.manual_seed(0)
 
 
@@ -65,7 +51,7 @@ def get_mse(truth, estimate, policy_assignment):
     return MSE
 
 
-def load_and_create_datasets(data_path, policy_out, dir_out):
+def load_and_create_datasets(data_path, policy_out, dir_out, loss):
     # init policy out and list of training policies
 
     policy_out_idx = POLICIES.index(policy_out)
@@ -82,7 +68,7 @@ def load_and_create_datasets(data_path, policy_out, dir_out):
     numbers = []
     min_rtts = []
 
-    file_name = policy_out
+    file_name = f"{policy_out}_{loss}"
     savepath = f"{dir_out}/train_data_{file_name}/"
     try:
         os.makedirs(savepath)
@@ -227,18 +213,11 @@ def parse_args():
         help=f"choose test policy from {POLICIES}",
     )
     parser.add_argument(
-        "--kappa",
-        type=float,
-        default=None,
-        help="choose the kappa parameters",
-    )
-    parser.add_argument(
-        "--slsim_loss",
+        "--loss",
         type=str,
         default="mse_loss",
         help="choose the loss from mse_loss, l1_loss, huber_loss",
     )
-
     parser.add_argument(
         "--seed", type=int, default=42, help="random seed (default: 42)"
     )
@@ -275,65 +254,40 @@ def parse_args():
 def main():
     # get parameters
     args = parse_args()
-    if args.kappa is None:
-        # choose the best kappa found using CV
-        args.kappa = best_kappa[args.policy_out]
 
     policy_index = POLICIES.index(args.policy_out)
     # generate data wihtout the test policy
     print("GENERATE DATASETS .. ")
-    generated_datapath = load_and_create_datasets(args.dir, args.policy_out, args.dir)
-
-    print("TRAIN CAUSALSIM .. ")
-    # train causalsim, no_policies will always equal the number of all policies - 1 (i.e., the test policy)
-    train_causal_sim(
-        generated_datapath,
-        args.kappa,
-        no_policies=NO_POLICIES - 1,
-        models_path=f"{args.dir}/models/{args.policy_out}",
-    )
-
-    print("GENERATE CAUSALSIM COUNTERFACTUALS")
-    alg = "causalsim"
-    cf_causalsim, features_causalsim = generate_cfs(
-        args.dir,
-        generated_datapath,
-        models_path=f"{args.dir}/models/{args.policy_out}/{alg}/",
-        config=args,
-        test_policy_idx=policy_index,
-        alg=alg,
-        r=2,
+    generated_datapath = load_and_create_datasets(
+        args.dir, args.policy_out, args.dir, args.loss
     )
 
     print("TRAIN SLSIM .. ")
     # train direct
-    # train direct
     train_slsim(
         generated_datapath,
-        models_path=f"{args.dir}/models/{args.policy_out}/{args.slsim_loss}",
-        loss=args.slsim_loss,
+        models_path=f"{args.dir}/models/{args.policy_out}/{args.loss}",
+        loss=args.loss,
     )
+
     print("GENERATE SLSIM COUNTERFACTUALS")
     alg = "slsim"
     cf_slsim = generate_cfs(
         args.dir,
         generated_datapath,
-        models_path=f"{args.dir}/models/{args.policy_out}/{args.slsim_loss}/{alg}/",
+        models_path=f"{args.dir}/models/{args.policy_out}/{args.loss}/{alg}/",
         config=args,
-        test_policy_idx=policy_index,
+        test_policy_idx=None,
         alg=alg,
     )
     policy = POLICIES[policy_index]
     policy_path = policy_paths_names[policy_index]
+    np.save(f"cfs/cf_{args.policy_out}_{args.loss}.npy", cf_slsim)
+
     print("Plotting results")
+
     policy_assignment = np.load(f"{generated_datapath}/policy_assignment.npy")
     true_buffer = np.load(f"{args.dir}/{policy_path}.npy")[:, :, 10]
-
-    MAPE_causal = get_mse(
-        true_buffer,
-        cf_causalsim[0, ..., 0],
-        policy_assignment,
-    )
 
     MAPE_slsim = get_mse(
         true_buffer,
@@ -341,15 +295,13 @@ def main():
         policy_assignment,
     )
     os.makedirs("figures", exist_ok=True)
-    print(len(MAPE_causal))
     plt.figure()
     plt.title(f"buffer size predictions for test policy {policy}")
-    cdf(MAPE_causal, label="CausalSim")
     cdf(MAPE_slsim, label="SLSim")
     plt.xlabel("buffer size prediction MSE")
     plt.ylabel("CDF(%)")
     plt.legend()
-    plt.savefig(f"figures/buffer_size_MAPE_{args.policy_out}_{args.kappa}.png")
+    plt.savefig(f"figures/buffer_size_MAPE_{args.policy_out}_{args.loss}.png")
 
 
 if __name__ == "__main__":
